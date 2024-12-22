@@ -41,7 +41,7 @@ jobs:
           ssh -o StrictHostKeyChecking=no -i key.pem $USER@$HOST "docker service rm ktb-community-storage || true"
           ssh -o StrictHostKeyChecking=no -i key.pem $USER@$HOST "docker login ghcr.io -u ${{ github.actor }} -p ${{ secrets.GHCR_PAT }}"
           ssh -o StrictHostKeyChecking=no -i key.pem $USER@$HOST "docker pull ghcr.io/ktb-community/ktb-community-storage:latest"
-          ssh -o StrictHostKeyChecking=no -i key.pem $USER@$HOST "docker service create -e PORT=8000 -p 8000:8000 --replicas 2 --name ktb-community-storage ghcr.io/ktb-community/ktb-community-storage:latest"
+          ssh -o StrictHostKeyChecking=no -i key.pem $USER@$HOST "docker service create -e PORT=8080 -p 8080:8080 --replicas 2 --name ktb-community-storage ghcr.io/ktb-community/ktb-community-storage:latest"
           ssh -o StrictHostKeyChecking=no -i key.pem $USER@$HOST "docker service update --network-add community-monitoring_monitoring ktb-community-storage"
 
   notify:
