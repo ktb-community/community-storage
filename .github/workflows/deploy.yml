@@ -1,0 +1,57 @@
+name: CI/CD
+
+on:
+  push:
+    branches: [ main ]
+
+jobs:
+  build-and-push:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v3
+
+      - name: Setup QEMU
+        uses: docker/setup-qemu-action@v2
+
+      - name: Setup Docker Buildx
+        uses: docker/setup-buildx-action@v2
+
+      - name: Login to GHCR
+        run: echo ${{ secrets.GHCR_PAT }} | docker login ghcr.io -u ${{ github.actor }} --password-stdin
+
+      - name: Build and Push Docker Image
+        run: |
+          docker buildx build --platform linux/amd64 -t ghcr.io/ktb-community/ktb-community-storage:latest --push .
+
+  deploy:
+    needs: [build-and-push]
+    runs-on: ubuntu-latest
+    steps:
+      - name: Prepare SSH KEY
+        run: |
+          echo "${{ secrets.EC2_SSH_KEY }}" | base64 --decode > key.pem
+          chmod 600 key.pem
+
+      - name: SSH into EC2 and pull/run container
+        run: |
+          HOST=${{ secrets.EC2_HOST }}
+          USER=${{ secrets.EC2_USER }}
+          
+          ssh -o StrictHostKeyChecking=no -i key.pem $USER@$HOST "docker service rm ktb-community-storage || true"
+          ssh -o StrictHostKeyChecking=no -i key.pem $USER@$HOST "docker login ghcr.io -u ${{ github.actor }} -p ${{ secrets.GHCR_PAT }}"
+          ssh -o StrictHostKeyChecking=no -i key.pem $USER@$HOST "docker pull ghcr.io/ktb-community/ktb-community-storage:latest"
+          ssh -o StrictHostKeyChecking=no -i key.pem $USER@$HOST "docker service create -e PORT=8000 -p 8000:8000 --replicas 2 --name ktb-community-storage ghcr.io/ktb-community/ktb-community-storage:latest"
+          ssh -o StrictHostKeyChecking=no -i key.pem $USER@$HOST "docker service update --network-add community-monitoring_monitoring ktb-community-storage"
+
+  notify:
+    needs: [deploy]
+    runs-on: ubuntu-latest
+    steps:
+      - name: Send Discord Notification
+        env:
+          DISCORD_WEBHOOK: ${{ secrets.DISCORD_WEBHOOK }}
+        run: |
+          curl -H "Content-Type: application/json" \
+               -d '{"content": "[STORAGE] 배포가 완료되었습니다."}' \
+               $DISCORD_WEBHOOK
