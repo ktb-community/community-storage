@@ -1,5 +1,14 @@
 {
+  "name": "community-storage",
+  "version": "1.0.0",
+  "main": "app.js",
+  "scripts": {
+    "dev": "cross-env NODE_ENV=development node ./src/app.js",
+    "prod": "cross-env NODE_ENV=production node ./src/app.js"
+  },
+  "author": "luis.hwang",
   "dependencies": {
+    "cross-env": "^7.0.3",
     "express": "^4.21.2"
   }
 }
