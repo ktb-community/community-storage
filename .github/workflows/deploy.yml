@@ -41,8 +41,7 @@ jobs:
           ssh -o StrictHostKeyChecking=no -i key.pem $USER@$HOST "docker service rm ktb-community-storage || true"
           ssh -o StrictHostKeyChecking=no -i key.pem $USER@$HOST "docker login ghcr.io -u ${{ github.actor }} -p ${{ secrets.GHCR_PAT }}"
           ssh -o StrictHostKeyChecking=no -i key.pem $USER@$HOST "docker pull ghcr.io/ktb-community/ktb-community-storage:latest"
-          ssh -o StrictHostKeyChecking=no -i key.pem $USER@$HOST "docker service create -e PORT=${{ secrets.PORT }} -e SECRET_ACCESS_KEY=${{ secrets.SECRET_ACCESS_KEY }} -e ACCESS_KEY_ID=${{ secrets.ACCESS_KEY_ID }} -e BUCKET_NAME=${{ secrets.BUCKET_NAME }} -e REGION=${{ secrets.REGION }} -p 8080:8080 --replicas 2 --name ktb-community-storage ghcr.io/ktb-community/ktb-community-storage:latest"
-          ssh -o StrictHostKeyChecking=no -i key.pem $USER@$HOST "docker service update --network-add community-monitoring_monitoring ktb-community-storage"
+          ssh -o StrictHostKeyChecking=no -i key.pem $USER@$HOST "docker service create -e PORT=${{ secrets.PORT }} -e SECRET_ACCESS_KEY=${{ secrets.SECRET_ACCESS_KEY }} -e ACCESS_KEY_ID=${{ secrets.ACCESS_KEY_ID }} -e BUCKET_NAME=${{ secrets.BUCKET_NAME }} -e REGION=${{ secrets.REGION }} -p 8080:8080 --replicas 2 --network community-monitoring_monitoring --name ktb-community-storage ghcr.io/ktb-community/ktb-community-storage:latest"
 
   notify:
     needs: [deploy]
