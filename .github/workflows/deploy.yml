@@ -25,7 +25,7 @@ jobs:
           docker buildx build --platform linux/amd64 -t ghcr.io/ktb-community/ktb-community-storage:latest --push .
 
   deploy:
-    needs: [build-and-push]
+    needs: [ build-and-push ]
     runs-on: ubuntu-latest
     steps:
       - name: Prepare SSH KEY
@@ -42,9 +42,11 @@ jobs:
           ssh -o StrictHostKeyChecking=no -i key.pem $USER@$HOST "docker login ghcr.io -u ${{ github.actor }} -p ${{ secrets.GHCR_PAT }}"
           ssh -o StrictHostKeyChecking=no -i key.pem $USER@$HOST "docker pull ghcr.io/ktb-community/ktb-community-storage:latest"
           ssh -o StrictHostKeyChecking=no -i key.pem $USER@$HOST "docker service create -e PORT=${{ secrets.PORT }} -e SECRET_ACCESS_KEY=${{ secrets.SECRET_ACCESS_KEY }} -e ACCESS_KEY_ID=${{ secrets.ACCESS_KEY_ID }} -e BUCKET_NAME=${{ secrets.BUCKET_NAME }} -e REGION=${{ secrets.REGION }} -p 8080:8080 --replicas 2 --network ktb-community-overlay --name ktb-community-storage ghcr.io/ktb-community/ktb-community-storage:latest"
+          ssh -o StrictHostKeyChecking=no -i key.pem $USER@$HOST "docker stop ktb-community-fe-nginx || true"
+          ssh -o StrictHostKeyChecking=no -i key.pem $USER@$HOST "docker start ktb-community-fe-nginx || true"
 
   notify:
-    needs: [deploy]
+    needs: [ deploy ]
     runs-on: ubuntu-latest
     steps:
       - name: Send Discord Notification
