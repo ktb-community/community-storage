@@ -8,6 +8,19 @@ require('dotenv').config({path: './.env'})
 app.use(express.json());
 app.use(express.urlencoded({extended: true}));
 
+/* Metrics */
+const client = require("prom-client");
+const apiMetrics = require("prometheus-api-metrics");
+const register = new client.Registry();
+
+app.use(apiMetrics());
+
+app.get("/metrics", async (req, res) => {
+    res.setHeader("Content-Type", register.contentType);
+    res.end(await register.metrics());
+});
+
+/* S3 Bucket 연동 */
 const ACCESS_KEY_ID = process.env.ACCESS_KEY_ID;
 const SECRET_ACCESS_KEY = process.env.SECRET_ACCESS_KEY;
 const BUCKET_NAME = process.env.BUCKET_NAME;
