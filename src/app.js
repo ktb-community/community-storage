@@ -46,7 +46,7 @@ const upload = multer({
     storage: storage
 });
 
-app.get('/uploads/:key', async (req, res) => {
+app.get('/storage/:key', async (req, res) => {
     const objectKey = req.params.key;
     const bucketName = BUCKET_NAME;
     const keyName = `contents/${objectKey}`;
@@ -55,10 +55,11 @@ app.get('/uploads/:key', async (req, res) => {
         Bucket: bucketName, Key: keyName,
     }),);
 
+    res.setHeader('Cache-Control', `public, max-age=${3600 * 24}`);
     return response.Body.pipe(res);
 });
 
-app.post('/', upload.single('photo'), async (req, res) => {
+app.post('/storage', upload.single('photo'), async (req, res) => {
     const photo = req.file;
     const loc = photo.location;
     const key = loc.substring(loc.lastIndexOf('/') + 1);
