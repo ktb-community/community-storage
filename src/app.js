@@ -1,10 +1,11 @@
 const express = require('express');
-const app = express();
 const {S3Client, GetObjectCommand} = require('@aws-sdk/client-s3');
 const multer = require('multer');
 const multerS3 = require('multer-s3');
+const cors = require('cors');
 require('dotenv').config({path: './.env'})
 
+const app = express();
 app.use(express.json());
 app.use(express.urlencoded({extended: true}));
 
@@ -27,6 +28,16 @@ const BUCKET_NAME = process.env.BUCKET_NAME;
 const REGION = process.env.REGION;
 const PORT = parseInt(process.env.PORT) || 8080;
 
+if (process.env.NODE_ENV === 'development') {
+    console.log(`ACCESS_KEY_ID: ${ACCESS_KEY_ID}`);
+    console.log(`SECRET_ACCESS_KEY: ${SECRET_ACCESS_KEY}`);
+    console.log(`BUCKET_NAME: ${BUCKET_NAME}`);
+    console.log(`REGION: ${REGION}`);
+    console.log(`PORT: ${PORT}`);
+
+    app.use(cors());
+}
+
 const s3Client = new S3Client({
     region: REGION, credentials: {
         accessKeyId: ACCESS_KEY_ID, secretAccessKey: SECRET_ACCESS_KEY
@@ -38,7 +49,8 @@ const storage = multerS3({
     metadata: function (req, file, cb) {
         cb(null, {fieldName: file.fieldname});
     }, key: function (req, file, cb) {
-        cb(null, `contents/${Date.now()}_${file.originalname}`);
+        const filename = file.originalname.replaceAll(' ', '_');
+        cb(null, `contents/${Date.now()}_${filename}`);
     }
 });
 
@@ -51,17 +63,17 @@ app.get('/storage/:key', async (req, res) => {
     const bucketName = BUCKET_NAME;
     const keyName = `contents/${objectKey}`;
 
-    const response = await s3Client.send(new GetObjectCommand({
-        Bucket: bucketName, Key: keyName,
-    }),);
+    const response = await s3Client.send(
+        new GetObjectCommand({Bucket: bucketName, Key: keyName})
+    );
 
     res.setHeader('Cache-Control', `public, max-age=${3600 * 24}`);
     return response.Body.pipe(res);
 });
 
-app.post('/storage', upload.single('photo'), async (req, res) => {
-    const photo = req.file;
-    const loc = photo.location;
+app.post('/storage', upload.single('file'), async (req, res) => {
+    const file = req.file;
+    const loc = file.location;
     const key = loc.substring(loc.lastIndexOf('/') + 1);
     res.json({key});
 });
