@@ -41,7 +41,7 @@ jobs:
           ssh -o StrictHostKeyChecking=no -i key.pem $USER@$HOST "docker service rm ktb-community-storage || true"
           ssh -o StrictHostKeyChecking=no -i key.pem $USER@$HOST "docker login ghcr.io -u ${{ github.actor }} -p ${{ secrets.GHCR_PAT }}"
           ssh -o StrictHostKeyChecking=no -i key.pem $USER@$HOST "docker pull ghcr.io/ktb-community/ktb-community-storage:latest"
-          ssh -o StrictHostKeyChecking=no -i key.pem $USER@$HOST "docker service create -e TZ=Asia/Seoul -e PORT=${{ secrets.PORT }} -e SECRET_ACCESS_KEY=${{ secrets.SECRET_ACCESS_KEY }} -e ACCESS_KEY_ID=${{ secrets.ACCESS_KEY_ID }} -e BUCKET_NAME=${{ secrets.BUCKET_NAME }} -e REGION=${{ secrets.REGION }} -p 8080:8080 --replicas 2 --network ktb-community-overlay --name ktb-community-storage ghcr.io/ktb-community/ktb-community-storage:latest"
+          ssh -o StrictHostKeyChecking=no -i key.pem $USER@$HOST "docker service create -e TZ=Asia/Seoul -e PORT=${{ secrets.PORT }} -e SECRET_ACCESS_KEY=${{ secrets.SECRET_ACCESS_KEY }} -e ACCESS_KEY_ID=${{ secrets.ACCESS_KEY_ID }} -e BUCKET_NAME=${{ secrets.BUCKET_NAME }} -e REGION=${{ secrets.REGION }} -e DB_HOST=${{ secrets.DB_HOST }} -e DB_USER=${{ secrets.DB_USER }} -e DB_PASSWORD=${{ secrets.DB_PASSWORD }} -e DB_PORT=${{ secrets.DB_PORT }} -e DB_NAME=${{ secrets.DB_NAME }} -p 8080:8080 --replicas 2 --network ktb-community-overlay --name ktb-community-storage ghcr.io/ktb-community/ktb-community-storage:latest"
           ssh -o StrictHostKeyChecking=no -i key.pem $USER@$HOST "docker stop ktb-community-fe-nginx || true"
           ssh -o StrictHostKeyChecking=no -i key.pem $USER@$HOST "docker start ktb-community-fe-nginx || true"
 
